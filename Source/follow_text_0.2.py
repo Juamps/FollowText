@@ -4,14 +4,15 @@ import sys  # read user input
 from nltk.corpus import wordnet as wn  # get list of nouns
 from time import sleep, time  # performance metrics
 import codecs # handle utf8 characters
+import datetime # for timestamp
 
 
 MAX_CRAWL = 5
 WORDS = []
-SUMMARIES = []
+SENTENCES = []
 NOUNS = []
 WORD_FILENAME = "words"
-SUMMARY_FILENAME = "summaries"
+SENTENCE_FILENAME = "sentences"
 
 
 def list_nouns():
@@ -23,16 +24,20 @@ def list_nouns():
 
 
 def next_word(pos=1):
-    global WORDS, NOUNS, SUMMARIES, MAX_CRAWL
+    '''
+    :param pos:
+    :return: returns the pos noun before the first period/stop [.]
+    '''
+    global WORDS, NOUNS, SENTENCES, MAX_CRAWL
     ans = None
     cont = 1
     nouns_found = 0
-    summary = SUMMARIES[-1]
-    words = summary.split(' ')
+    sentence = SENTENCES[-1]
+    words = sentence.split(' ')
     while not ans and cont < len(words):
-        ## select last word in summary
+        ## select last word in sentence
         noun = words[-cont]
-        ## remove periods, commas and plural forms ending in s from string
+        ## remove periods, commas and plural forms ending in s from word
         noun = noun.rstrip('.')
         noun = noun.rstrip(',')
         noun = noun.rstrip('\'')
@@ -51,10 +56,10 @@ def next_word(pos=1):
                     print "[!] Word '", noun, "' already in list"
                     print "    Skipping..."
         cont += 1
-    #crop summary if necessary
-    if len(SUMMARIES) < MAX_CRAWL and cont > 2:
-        summary = ' '.join(words[0:2-cont])
-        SUMMARIES[-1] = summary
+    ## crop sentence if necessary
+    if len(SENTENCES) < MAX_CRAWL and cont > 2:
+        sentence = ' '.join(words[0:2-cont])
+        SENTENCES[-1] = sentence
     return ans
 
 
@@ -70,7 +75,7 @@ def validate_seed(seed):
         # print e.options
     except wikipedia.exceptions.ConnectionError as e:
         print "[!] Error:", e
-        print "    Check your Internet conneciton and try again."
+        print "    Check your Internet connection and try again."
     if valid:
         print "[+] Valid seed."
     return valid
@@ -79,7 +84,7 @@ def validate_seed(seed):
 def add_word(word):
     print "[+] Current search:", word, "  [", cont + 1, "/", MAX_CRAWL, "]"
     try:
-        ## Fetch summary
+        ## Fetch sentence
         summary = wikipedia.summary(word)
     except wikipedia.exceptions.PageError as e:
         e.message
@@ -88,6 +93,10 @@ def add_word(word):
     except wikipedia.exceptions.DisambiguationError as e:
         ## chose a suggestion that explicitly has the word in it. If none, choose first suggestion
         try:
+            ## print all suggestions
+            # for option in e.options:
+            #     print option
+
             suggestion = next(sug for sug in e.options if word.lower() in sug.lower())
         except StopIteration:
             suggestion = e.options[0]
@@ -95,33 +104,37 @@ def add_word(word):
         print "[!] Ambiguous term, using:", suggestion
         # print e.options
         summary = wikipedia.summary(suggestion)
-    ## Append term and summary
 
+    ## Keep first sentence of summary
+    sentence = summary.split('.')[0]
+    ## Append term and sentence
     WORDS.append(word)
-    SUMMARIES.append(summary)
-    print "    Summary fetched."
-    print SUMMARIES[-1]
+    SENTENCES.append(sentence)
+    print "    Sentence fetched."
+    print SENTENCES[-1]
     print "\n"
 
 
 def write_to_file():
-    global WORDS, SUMMARIES, WORD_FILENAME, SUMMARY_FILENAME
-    wf = "../Output/"+WORD_FILENAME
-    sf = "../Output/"+SUMMARY_FILENAME
+    global WORDS, SENTENCES, WORD_FILENAME, SENTENCE_FILENAME
+    ## add timestaps to file names
+    timestamp = datetime.datetime.now().isoformat().split('.')[0]
+    wf = "../Output/" + WORD_FILENAME + timestamp
+    sf = "../Output/" + SENTENCE_FILENAME + timestamp
     with codecs.open(wf, 'wb', "utf-8") as f:
         for word in WORDS:
             f.write(word)
 
     with codecs.open(sf, 'wb', "utf-8") as f:
-        for summary in SUMMARIES:
-            f.write(summary)
+        for sentence in SENTENCES:
+            f.write(sentence + '. ')
 
 if __name__ == '__main__':
     t = time()
     # Validate function call
     if len(sys.argv) != 3:
         print "[!] Function must be called with exactly two (2) parameters." \
-              "\n    Usage: follow_text_0.1.py seed word_count "
+              "\n    Usage: follow_text_0.2.py seed word_count "
         print "    Exiting..."
         exit(0)
     elif not isinstance(sys.argv[2], int):
@@ -132,7 +145,7 @@ if __name__ == '__main__':
             print "    Exiting..."
             exit(0)
 
-    try:
+    # try:
         word = sys.argv[1]
         MAX_CRAWL = int(sys.argv[2])
         if validate_seed(word):
@@ -149,11 +162,11 @@ if __name__ == '__main__':
                     break
                 cont += 1
             # print "cook" in nouns
-    except:
-        print "[!] Unexpected error", sys.exc_info()[0]
-    finally:
+    # except:
+    #     print "[!] Unexpected error", sys.exc_info()[0]
+    # finally:
         # print "Words fetched:", WORDS
-        # for s in SUMMARIES:
+        # for s in SENTENCES:
         #     print s
         #     print "\n"
 
