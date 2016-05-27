@@ -30,6 +30,7 @@ def next_word(pos=1):
     summary = SUMMARIES[-1]
     words = summary.split(' ')
     while not ans and cont < len(words):
+        ## select last word in summary
         noun = words[-cont]
         ## remove periods, commas and plural forms ending in s from string
         noun = noun.rstrip('.')
@@ -120,7 +121,7 @@ if __name__ == '__main__':
     # Validate function call
     if len(sys.argv) != 3:
         print "[!] Function must be called with exactly two (2) parameters." \
-              "\n    Usage: follow_text.py seed word_count "
+              "\n    Usage: follow_text_0.1.py seed word_count "
         print "    Exiting..."
         exit(0)
     elif not isinstance(sys.argv[2], int):
