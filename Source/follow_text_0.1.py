@@ -23,6 +23,10 @@ def list_nouns():
 
 
 def next_word(pos=1):
+    """
+    :param pos: pos-1 nouns are skipped before returning
+    :return: pos noun in last summary
+    """
     global WORDS, NOUNS, SUMMARIES, MAX_CRAWL
     ans = None
     cont = 1
@@ -32,7 +36,7 @@ def next_word(pos=1):
     while not ans and cont < len(words):
         ## select last word in summary
         noun = words[-cont]
-        ## remove periods, commas and plural forms ending in s from string
+        ## remove periods, commas and plural forms ending in s from word
         noun = noun.rstrip('.')
         noun = noun.rstrip(',')
         noun = noun.rstrip('\'')
@@ -70,7 +74,7 @@ def validate_seed(seed):
         # print e.options
     except wikipedia.exceptions.ConnectionError as e:
         print "[!] Error:", e
-        print "    Check your Internet conneciton and try again."
+        print "    Check your Internet connection and try again."
     if valid:
         print "[+] Valid seed."
     return valid

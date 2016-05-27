@@ -145,7 +145,7 @@ if __name__ == '__main__':
             print "    Exiting..."
             exit(0)
 
-    # try:
+    try:
         word = sys.argv[1]
         MAX_CRAWL = int(sys.argv[2])
         if validate_seed(word):
@@ -161,10 +161,9 @@ if __name__ == '__main__':
                 if not word:
                     break
                 cont += 1
-            # print "cook" in nouns
-    # except:
-    #     print "[!] Unexpected error", sys.exc_info()[0]
-    # finally:
+    except:
+        print "[!] Unexpected error", sys.exc_info()[0]
+    finally:
         # print "Words fetched:", WORDS
         # for s in SENTENCES:
         #     print s
