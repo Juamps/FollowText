@@ -19,6 +19,9 @@ def list_nouns():
     print "[+] Creating list of nouns... (This only has to be done once)"
     ## Make list of nouns in wordnet
     NOUNS = {x.name().split('.', 1)[0] for x in wn.all_synsets('n')}
+
+    ## TODO CREATE A SEPARATE LIST FOR NOUNS ENDING IN S
+
     print "    Done!"
 
 
@@ -41,6 +44,8 @@ def next_word(pos=1):
         noun = noun.rstrip(',')
         noun = noun.rstrip('\'')
         noun = noun.lstrip('\'')
+
+        ## TODO CHECK FOR NOUNS ENDING IN S
         noun = noun.rstrip('s')
 
         ## check if word is noun
@@ -90,7 +95,7 @@ def add_word(word):
         if len(WORDS) == 0:
             print "[!]"
     except wikipedia.exceptions.DisambiguationError as e:
-        ## chose a suggestion that explicitly has the word in it. If none, choose first suggestion
+        ## Choose a suggestion that explicitly has the word in it. If none, choose first suggestion
         try:
             suggestion = next(sug for sug in e.options if word.lower() in sug.lower())
         except StopIteration:
