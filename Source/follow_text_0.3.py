@@ -10,6 +10,7 @@ import random # select random stuff
 from Flickr_connector import Flickr_connector  # manage Flickr info
 from urllib import urlretrieve  # download Flickr image
 from gtts import gTTS  # text to speech
+from PIL import Image # resize image
 
 MAX_CRAWL = 5
 WORDS = []
@@ -214,7 +215,7 @@ def add_word(word):
     fetch_image(word)
 
     ## Speak word
-    # text_to_speech_1(word)
+    text_to_speech_1(word)
 
 
 def write_to_file():
@@ -242,18 +243,37 @@ def fetch_image(word):
     photo_url = fc.fetch_photo(word)
     filetype = photo_url.split('.')[-1]
     filepath = "../Images/" + str(len(WORDS)) + "_" + word + "." + filetype
+    ## download image
     urlretrieve(photo_url, filepath)
+    ## resize image if landscape, width 1920px; if portrait height 1080px
+    im = Image.open(filepath)
+    width, height = im.size
+
+    if width > height:
+        ## scale width to 1920px
+        ## suppose width=w, scale=x;  w*x = 1920 => x = 1920/w
+        scale = 1920 / float(width)
+    else:
+        ## scale height to 1080px
+        scale = 1080 / float(height)
+    ## resize
+    w = int(width*scale)
+    h = int(height*scale)
+    resized_im = im.resize((w, h), Image.ANTIALIAS)
+    ## save resized
+    resized_im.save(filepath)
+
     print "    Done!"
 
 
 def text_to_speech_1(word):
     ## one file per word
-    tts = gTTS(text=word, lang=WIKI_LANGUAGE)
+    tts = gTTS(text=word + "... ", lang=WIKI_LANGUAGE)
     tts.save("../Audio/" + str(len(WORDS)) + "_" + word + ".mp3")
 
 
 def text_to_speech_2(filename):
-    ## one file per word
+    ## one file per run
     text = '... '.join(WORDS)
     tts = gTTS(text=text, lang=WIKI_LANGUAGE)
     tts.save(filename)
