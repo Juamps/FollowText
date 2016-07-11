@@ -9,8 +9,9 @@ import datetime # for timestamp
 import random # select random stuff
 from Flickr_connector import Flickr_connector  # manage Flickr info
 from urllib import urlretrieve  # download Flickr image
-from gtts import gTTS  # text to speech
+from gtts import gTTS  # google text to speech
 from PIL import Image # resize image
+import pyttsx  # system voices text to speech
 
 MAX_CRAWL = 5
 WORDS = []
@@ -21,7 +22,10 @@ SENTENCE_FILENAME = "sentences"
 CONT = 0
 WIKI_LANGUAGE = 'es'  # # 'es' for Spanish, 'en' for English, 'de' for German
 
-
+# TTS variables
+RATE = 200    # Integer speech rate in words per minute.
+VOICE = 'en'  # String identifier of the active voice.
+VOLUME = 0.5  # Floating point volume in the range of 0.0 to 1.0 inclusive.
 
 def list_nouns():
 
@@ -216,7 +220,9 @@ def add_word(word):
     fetch_image(word)
 
     ## Speak word
-    text_to_speech_1(word)
+    tts_google_word(word)
+    tts_system_word(word)
+
 
 
 def write_to_file():
@@ -235,7 +241,7 @@ def write_to_file():
         for sentence in SENTENCES:
             f.write(sentence + " ")
 
-    text_to_speech_2(tf)
+    tts_google_file(tf)
 
 
 def fetch_image(word):
@@ -267,13 +273,20 @@ def fetch_image(word):
     print "    Done!"
 
 
-def text_to_speech_1(word):
+def tts_system_word(word):
+    engine = pyttsx.init()
+    filename = "../Audio/" + str(len(WORDS)) + "_" + word + "_system.mp3"
+    engine.speakToFile(text=word, filename=filename, name='word')
+
+
+def tts_google_word(word):
     ## one file per word
     tts = gTTS(text=word + "... ", lang=WIKI_LANGUAGE)
-    tts.save("../Audio/" + str(len(WORDS)) + "_" + word + ".mp3")
+    filename = "../Audio/" + str(len(WORDS)) + "_" + word + "_google.mp3"
+    tts.save(filename)
 
 
-def text_to_speech_2(filename):
+def tts_google_file(filename):
     ## one file per run
     text = '... '.join(WORDS)
     tts = gTTS(text=text, lang=WIKI_LANGUAGE)
