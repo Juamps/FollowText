@@ -19,10 +19,17 @@ def list_nouns():
     print "[+] Creating list of nouns... (This only has to be done once)"
     ## Make list of nouns in wordnet
     NOUNS = {x.name().split('.', 1)[0] for x in wn.all_synsets('n')}
+
+    ## TODO CREATE A SEPARATE LIST FOR NOUNS ENDING IN S
+
     print "    Done!"
 
 
 def next_word(pos=1):
+    """
+    :param pos: pos-1 nouns are skipped before returning
+    :return: pos noun in last summary
+    """
     global WORDS, NOUNS, SUMMARIES, MAX_CRAWL
     ans = None
     cont = 1
@@ -30,13 +37,15 @@ def next_word(pos=1):
     summary = SUMMARIES[-1]
     words = summary.split(' ')
     while not ans and cont < len(words):
-        ## select next word
+        ## select last word in summary
         noun = words[-cont]
-        ## remove periods, commas and plural forms ending in s from string
+        ## remove periods, commas and plural forms ending in s from word
         noun = noun.rstrip('.')
         noun = noun.rstrip(',')
         noun = noun.rstrip('\'')
         noun = noun.lstrip('\'')
+
+        ## TODO CHECK FOR NOUNS ENDING IN S
         noun = noun.rstrip('s')
 
         ## check if word is noun
@@ -70,7 +79,7 @@ def validate_seed(seed):
         # print e.options
     except wikipedia.exceptions.ConnectionError as e:
         print "[!] Error:", e
-        print "    Check your Internet conneciton and try again."
+        print "    Check your Internet connection and try again."
     if valid:
         print "[+] Valid seed."
     return valid
@@ -86,7 +95,7 @@ def add_word(word):
         if len(WORDS) == 0:
             print "[!]"
     except wikipedia.exceptions.DisambiguationError as e:
-        ## chose a suggestion that explicitly has the word in it. If none, choose first suggestion
+        ## Choose a suggestion that explicitly has the word in it. If none, choose first suggestion
         try:
             suggestion = next(sug for sug in e.options if word.lower() in sug.lower())
         except StopIteration:
@@ -121,7 +130,7 @@ if __name__ == '__main__':
     # Validate function call
     if len(sys.argv) != 3:
         print "[!] Function must be called with exactly two (2) parameters." \
-              "\n    Usage: follow_text.py seed word_count "
+              "\n    Usage: follow_text_0.1.py seed word_count "
         print "    Exiting..."
         exit(0)
     elif not isinstance(sys.argv[2], int):
