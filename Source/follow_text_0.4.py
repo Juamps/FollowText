@@ -1,18 +1,19 @@
 __author__ = 'jp'
 import wikipedia # access Wikipedia
 import sys  # read user input
-import nltk # words in spanish
+import nltk  # word database
 from nltk.corpus import wordnet as wn  # get list of nouns
 from time import sleep, time  # performance metrics
-import codecs # handle utf8 characters
-import datetime # for timestamp
-import random # select random stuff
+import codecs  # handle utf8 characters
+import datetime  # for timestamp
+import random  # select random stuff
 from Flickr_connector import Flickr_connector  # manage Flickr info
 from urllib import urlretrieve  # download Flickr image
-from gtts import gTTS  # google text to speech
-from PIL import Image # resize image
-import pyttsx  # system voices text to speech
+from PIL import Image  # resize image
+from AppKit import NSSpeechSynthesizer
+from Cocoa import NSURL  # create NSURL format to save audio file
 
+### GLOBAL VARIABLES
 MAX_CRAWL = 5
 WORDS = []
 SENTENCES = []
@@ -23,9 +24,11 @@ CONT = 0
 WIKI_LANGUAGE = 'es'  # # 'es' for Spanish, 'en' for English, 'de' for German
 
 # TTS variables
-RATE = 200    # Integer speech rate in words per minute.
-VOICE = 'en'  # String identifier of the active voice.
-VOLUME = 0.5  # Floating point volume in the range of 0.0 to 1.0 inclusive.
+RATE = 200    # Value in words per minute; human speed 180-220
+VOLUME = 0.5  # Floating point value in the range of 0.0 to 1.0 inclusive.
+VOICE = "com.apple.speech.synthesis.voice.juan.premium"  # String identifier of the active voice.
+              ### RUN showcase_voices.py TO SEE ALL AVAILABLE VOICES IN YOUR SYSTEM ###
+
 
 def list_nouns():
 
@@ -220,8 +223,7 @@ def add_word(word):
     fetch_image(word)
 
     ## Speak word
-    tts_google_word(word)
-    tts_system_word(word)
+    tts_NS(word)
 
 
 
@@ -240,8 +242,6 @@ def write_to_file():
     with codecs.open(sf, 'wb', "utf-8") as f:
         for sentence in SENTENCES:
             f.write(sentence + " ")
-
-    tts_google_file(tf)
 
 
 def fetch_image(word):
@@ -273,24 +273,24 @@ def fetch_image(word):
     print "    Done!"
 
 
-def tts_system_word(word):
-    engine = pyttsx.init()
-    filename = "../Audio/" + str(len(WORDS)) + "_" + word + "_system.mp3"
-    engine.speakToFile(text=word, filename=filename, name='word')
+def tts_NS(word):
+    ## Initialise voice synthesizer
+    # synth = [[NSSpeechSynthesizer alloc] initWithVoice:nil];
+    synth = NSSpeechSynthesizer.alloc().initWithVoice_(None)
+
+    ## Set voice values
+    synth.setVoice_(VOICE)
+    synth.setVolume_(VOLUME)
+    synth.setRate_(RATE)
+
+    ## Create NSURL path
+    filepath = "../Audio/" + str(len(WORDS)) + "_" + word + "_NS.aiff"
+    url = NSURL.fileURLWithPath_(filepath)
+
+    ## Save sythesized word
+    synth.startSpeakingString_toURL_(word, url)
 
 
-def tts_google_word(word):
-    ## one file per word
-    tts = gTTS(text=word + "... ", lang=WIKI_LANGUAGE)
-    filename = "../Audio/" + str(len(WORDS)) + "_" + word + "_google.mp3"
-    tts.save(filename)
-
-
-def tts_google_file(filename):
-    ## one file per run
-    text = '... '.join(WORDS)
-    tts = gTTS(text=text, lang=WIKI_LANGUAGE)
-    tts.save(filename)
 
 
 def main():
