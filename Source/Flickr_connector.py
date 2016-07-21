@@ -43,8 +43,9 @@ class Flickr_connector:
         '''
 
         photo = self.flickr.photos.search(tags=tags, accuracy=11,
-                                      per_page=PER_PAGE, page=1,  # default page = 1
-                                      extras='original_format')[0][0]
+                                          per_page=PER_PAGE, page=1,  # default page = 1
+                                          extras='original_format',
+                                          content_type=1)[0][0]
 
         photo_id = photo.get('id')
         ## get available sizes
