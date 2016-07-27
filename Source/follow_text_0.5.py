@@ -9,12 +9,12 @@ import datetime  # for timestamp
 import random  # select random stuff
 from Flickr_connector import Flickr_connector  # manage Flickr info
 from urllib import urlretrieve  # download Flickr image
+from urllib2 import urlopen, HTTPError  # check image permissions
 from PIL import Image  # resize image
 from AppKit import NSSpeechSynthesizer
 from Cocoa import NSURL  # create NSURL format to save audio file
-import requests # query google api
-import json # interpret google api answer
-
+import requests  # query google api
+import json  # interpret google api answer
 
 ### GLOBAL VARIABLES
 MAX_CRAWL = 5
@@ -25,7 +25,8 @@ WORD_FILENAME = "words"
 SENTENCE_FILENAME = "sentences"
 CONT = 0
 WIKI_LANGUAGE = 'es'  # # 'es' for Spanish, 'en' for English, 'de' for German
-KEYS = {} # keys for flickr and google apis
+KEYS = {} # keys for flickr and google APIs
+IMG_SIZE = "xxlarge"  # # options are 'icon', 'small', 'medium', 'large', 'xlarge', 'xxlarge', 'huge'
 
 # TTS variables
 RATE = 200    # Value in words per minute; human speed 180-220
@@ -163,7 +164,7 @@ def add_word(word):
         ## Fetch sentence
         summary = wikipedia.summary(word)
     except wikipedia.exceptions.PageError as e:
-        e.message
+        print e.message
         if len(WORDS) == 0:
             print "[!]"
     except wikipedia.exceptions.DisambiguationError as e:
@@ -260,9 +261,10 @@ def with_google(word):
     searchTerm = word
     searchUrl = "https://www.googleapis.com/customsearch/v1?q=" + \
         searchTerm + "&start=" + startIndex + "&key=" + key + "&cx=" + cx + \
-        "&searchType=image" + "&imgType=photo"
+        "&searchType=image" + "&imgType=photo" + "&imgSize=" + IMG_SIZE
 
     r = requests.get(searchUrl)
+
     response = r.content.decode('utf-8')
     result = json.loads(response)
     # print(searchUrl)
@@ -282,26 +284,26 @@ def with_google(word):
     # for url in urls:
     #     print url
 
-    return urls[0]
+    downloadable = None
+    to_remove = []
+    while downloadable is None:
+        for i in range(len(urls)):
+            try:
+                urlopen(urls[i])
+                downloadable = True
+            except HTTPError:
+                to_remove.append(i)
+    # remove if not accessible
+    for element in to_remove:
+        del urls[element]
 
-def fetch_image(word):
-    print "[+] Fetching image... "
+    return random.choice(urls)
 
-    ## Using Flickr
-    # photo_url = with_flickr(word)
-
-    ## Using Google Search
-    photo_url = with_google(word)
-
-    filetype = photo_url.split('.')[-1]
-    filepath = "../Images/" + str(len(WORDS)) + "_" + word + "." + filetype
-
-    ## download image
-    urlretrieve(photo_url, filepath)
-    ## resize image if landscape, width 1920px; if portrait height 1080px
+def resize_image(filepath):
     im = Image.open(filepath)
     width, height = im.size
 
+    #if landscape, width 1920px; if portrait height 1080px
     if width > height:
         ## scale width to 1920px
         ## suppose width=w, scale=x;  w*x = 1920 => x = 1920/w
@@ -315,6 +317,28 @@ def fetch_image(word):
     resized_im = im.resize((w, h), Image.ANTIALIAS)
     ## save resized
     resized_im.save(filepath)
+
+def fetch_image(word):
+    print "[+] Fetching image... "
+
+    ## Using Flickr
+    photo_url_Flickr = with_flickr(word)
+    filetype = photo_url_Flickr.split('.')[-1]
+    filepath_Flickr = "../Images/Flickr/" + str(len(WORDS)) + "_" + word + "." + filetype
+
+    ## Using Google Search
+    photo_url_Google = with_google(word)
+    filetype = photo_url_Google.split('.')[-1]
+    filepath_Google = "../Images/Google/" + str(len(WORDS)) + "_" + word + "." + filetype
+
+    ## download images
+    urlretrieve(photo_url_Flickr, filepath_Flickr)
+    urlretrieve(photo_url_Google, filepath_Google)
+
+    ## resize images
+    resize_image(filepath_Flickr)
+    resize_image(filepath_Google)
+
 
     print "    Done!"
 
